@@ -1,0 +1,5 @@
+numpy
+matplotlib
+fluiddyn
+h5py
+h5netcdf

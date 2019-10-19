@@ -1,0 +1,70 @@
+"""Spectra
+==========
+
+
+"""
+
+from spectratmo.output import BaseOutput
+from spectratmo.phys_const import R
+
+
+class EnergyBudget(BaseOutput):
+
+    _name = 'energy_budget'
+
+    def compute_1instant(self, instant):
+        r"""Compute energy budget
+
+        Notes
+        -----
+
+        .. math::
+
+           E_K =
+
+           E_A =
+
+        """
+        ds = self._dataset
+
+        Gamma_p = self.get_Gamma_p()
+
+        u3d = ds.get_spatial3dvar('u', instant)
+        v3d = ds.get_spatial3dvar('v', instant)
+        o3d = ds.get_spatial3dvar('omega', instant)
+        T3d = ds.get_spatial3dvar('T', instant)
+
+        gamma_p = self.global_tmean.compute_gamma()
+
+        for ip, p in enumerate(ds.pressure):
+            gamma = gamme_p[ip]
+            Gamma = Gamma_p[ip]
+
+            u2d = u3d[ip]
+            v2d = v3d[ip]
+            o2d = o3d[ip]
+            T2d = T3d[ip]
+
+            theta2d = Gamma * T2d
+
+            alpha2d = R / p * T2d
+
+            E_K = ds.compute_hmean_representative(
+                u2d**2 + v2d**2, ip)
+
+            E_P = gamma * ds.compute_hmean_representative(
+                theta2d**2, ip)
+
+            C = ds.compute_hmean_representative(
+                o2d * alpha2d, ip)
+
+        raise NotImplementedError
+
+    def compute_tmean(self):
+        raise NotImplementedError
+
+    def load(self):
+        raise NotImplementedError
+
+    def plot(self):
+        raise NotImplementedError

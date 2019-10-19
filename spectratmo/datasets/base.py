@@ -1,0 +1,194 @@
+"""Base class of dataset
+========================
+
+.. autoclass:: DataSetGCM
+   :members:
+   :private-members:
+
+"""
+
+import os
+
+from runpy import run_path
+
+import numpy as np
+
+from spectratmo.spherical_harmonics import EasySHT
+from spectratmo.planets import Planet
+
+from spectratmo.userconfig import ConfigError
+
+from spectratmo.output.global_tmean import GlobalTMeanWithBeta
+from spectratmo.output.spectra import Spectra
+from spectratmo.output.energy_budget import EnergyBudget
+from spectratmo.output.seb import SpectralEnergyBudget
+from spectratmo.output.spatial import SpatialRepr
+
+_classes_output = [
+    GlobalTMeanWithBeta, Spectra, EnergyBudget, SpectralEnergyBudget,
+    SpatialRepr]
+_classes_output = {cls._name: cls for cls in _classes_output}
+
+
+class DataSetGCM(object):
+    """Represent a dataset.
+
+    Parameters
+    ----------
+
+    name : str
+
+      Name of the dataset.
+
+    path : str
+
+      Path of the directory of the dataset. A file config.py has to be
+      in this directory.
+
+    lmax : {None, int}
+
+      Truncation degree.
+
+    nlon : {None, int}
+
+      Number of points over the longitude.
+
+    nlat : {None, int}
+
+      Number of points over the latitude.
+
+    nlev : {None, int}
+
+      Number of levels over the altitude.
+
+    without_sh : {False, bool}
+
+      Without spherical harmonic operator.
+
+    planet : {None, `spectratmo.planets import Planet`}
+
+      A planet.
+
+    """
+
+    _classes_output = _classes_output
+
+    def __init__(self, name=None, path=None,
+                 lmax=None,
+                 nlon=None, nlat=None, nlev=None,
+                 without_sh=False,
+                 planet=None,make_eddy=None):
+
+        self.nlon = nlon
+        self.nlat = nlat
+        self.nlev = nlev
+
+        if name is None and path is None:
+            raise ValueError
+        elif path is not None:
+            path = os.path.expanduser(path)
+            self.path = path
+
+            config = run_path(os.path.join(path, 'config.py'))
+            config = {k: v for k, v in config.items()
+                      if not k.startswith('__')}
+            self.config = config
+
+            try:
+                name = config['name']
+                self.instants = config['instants']
+            except AttributeError:
+                raise ConfigError(
+                    'The variables `name` and `instants` have to be defined in'
+                    ' the configuration file.')
+            self.nb_instants = len(self.instants)
+
+        elif name is not None:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+
+        self.name = name
+
+        print self._classes_output.items()
+
+        for _name, cls in self._classes_output.items():
+            self.__dict__[_name] = cls(self)
+
+        if planet is None:
+            planet = Planet('Unknown')
+        else: 
+            planet = Planet(planet)
+        self.planet = planet
+
+        self.make_eddy = 0
+        if make_eddy == 1: self.make_eddy = 1
+
+        #print self.make_eddy, 'make_eddy!!!'
+
+#        sys.exit(1)
+
+        #print 'hi',planet,planet.radius
+
+        if not without_sh:
+            self.oper = EasySHT(lmax=lmax,
+                                nlat=nlat, nlon=nlon,
+                                radius=planet.radius)
+
+    def print_info(self):
+        print('\nInformation dataset \"' + self.name + '\"'
+              'nlon = {0}, nlat = {1}'.format(self.nlon, self.nlat) +
+              '~ 1 point every {0:6.2f} km'.format(
+                  2*np.pi*self.planet.radius/self.nlon/1000))
+        if hasattr(self, 'nz'):
+            print('{0} levels in the vertical'.format(self.nz))
+        print('')
+        if hasattr(self, 'esh'):
+            print('Info library shtns (spherical harmonic transforms):')
+            self.esh.print_info()
+            print('')
+
+    def get_spectral3dvar(self, key, instant):
+        raise NotImplementedError
+
+    def get_spatial3dvar(self, key, instant):
+        raise NotImplementedError
+
+    def get_spectral2dvar(self, key, instant, ip=0):
+        raise NotImplementedError
+
+    def get_spatial2dvar(self, key, instant, ip=0):
+        raise NotImplementedError
+
+    #def compute_hmean(self, f_xy):
+    #    """Compute the horizontal mean."""
+    #    delta = 360./self.nlon
+    #    return (delta*np.pi/180)**2 / (4*np.pi) * np.sum(f_xy*self.cosLATS)
+
+    #def compute_hmean_representative(self, f_xy, ip=None, beta=None):
+    #    """Compute the horizontal "representative" mean."""
+    #    if beta is None:
+    #        if not hasattr(self, 'beta3d'):
+    #            raise ValueError(
+    #                'first run dataset.compute_tmean_ps_beta().')
+    #        if ip < self.nb_lev_beta:
+    #            result = self.compute_hmean(
+    #                f_xy*self.beta3d[ip])/self.beta_mean1d[ip]
+    #        elif ip >= self.nb_lev_beta:
+    #            result = self.compute_hmean(f_xy)
+    #    else:
+    #        result = self.compute_hmean(f_xy*beta)/self.compute_hmean(beta)
+    #    return result
+
+    def partialp_f(self, f):
+        """Compute derivative over pressure."""
+        p = self.pressure_levels
+        result = np.empty_like(p)
+        result[1:-1] = (f[2:] - f[:-1]) / (p[2:] - p[:-1])
+        result[0] = (f[1] - f[0]) / (p[1] - p[0])
+        result[-1] = (f[-1] - f[-2]) / (p[-1] - p[-2])
+        return result
+
+if __name__ == '__main__':
+    ds = DataSetGCM(
+        path='~/useful/project/13KTH/Results_spectratmo/False_data')

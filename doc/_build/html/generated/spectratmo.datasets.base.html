@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spectratmo.datasets.base &mdash; SpectrAtmo 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="SpectrAtmo 0.0.0 documentation" href="../index.html" />
+    <link rel="up" title="spectratmo.datasets" href="spectratmo.datasets.html" />
+    <link rel="next" title="spectratmo.datasets.puma" href="spectratmo.datasets.puma.html" />
+    <link rel="prev" title="spectratmo.datasets.puma" href="spectratmo.datasets.puma.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.datasets.puma.html" title="spectratmo.datasets.puma"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.datasets.puma.html" title="spectratmo.datasets.puma"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="spectratmo.datasets.html" accesskey="U">spectratmo.datasets</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">spectratmo.datasets.base</a><ul>
+<li><a class="reference internal" href="#base-class-of-dataset">Base class of dataset</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="spectratmo.datasets.puma.html"
+                        title="previous chapter">spectratmo.datasets.puma</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="spectratmo.datasets.puma.html"
+                        title="next chapter">spectratmo.datasets.puma</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/generated/spectratmo.datasets.base.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-spectratmo.datasets.base">
+<span id="spectratmo-datasets-base"></span><h1>spectratmo.datasets.base<a class="headerlink" href="#module-spectratmo.datasets.base" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="base-class-of-dataset">
+<h2>Base class of dataset<a class="headerlink" href="#base-class-of-dataset" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="spectratmo.datasets.base.DataSetGCM">
+<em class="property">class </em><tt class="descclassname">spectratmo.datasets.base.</tt><tt class="descname">DataSetGCM</tt><big>(</big><em>name=None</em>, <em>path=None</em>, <em>lmax=None</em>, <em>nlon=None</em>, <em>nlat=None</em>, <em>nlev=None</em>, <em>without_sh=False</em>, <em>planet=None</em><big>)</big><a class="reference internal" href="../_modules/spectratmo/datasets/base.html#DataSetGCM"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectratmo.datasets.base.DataSetGCM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represent a dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>name</strong> : str</p>
+<blockquote>
+<div><p>Name of the dataset.</p>
+</div></blockquote>
+<p><strong>path</strong> : str</p>
+<blockquote>
+<div><p>Path of the directory of the dataset. A file config.py has to be
+in this directory.</p>
+</div></blockquote>
+<p><strong>lmax</strong> : {None, int}</p>
+<blockquote>
+<div><p>Truncation degree.</p>
+</div></blockquote>
+<p><strong>nlon</strong> : {None, int}</p>
+<blockquote>
+<div><p>Number of points over the longitude.</p>
+</div></blockquote>
+<p><strong>nlat</strong> : {None, int}</p>
+<blockquote>
+<div><p>Number of points over the latitude.</p>
+</div></blockquote>
+<p><strong>nlev</strong> : {None, int}</p>
+<blockquote>
+<div><p>Number of levels over the altitude.</p>
+</div></blockquote>
+<p><strong>without_sh</strong> : {False, bool}</p>
+<blockquote>
+<div><p>Without spherical harmonic operator.</p>
+</div></blockquote>
+<p><strong>planet</strong> : {None, <cite>spectratmo.planets import Planet</cite>}</p>
+<blockquote class="last">
+<div><p>A planet.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="spectratmo.datasets.base.DataSetGCM.compute_hmean">
+<tt class="descname">compute_hmean</tt><big>(</big><em>f_xy</em><big>)</big><a class="headerlink" href="#spectratmo.datasets.base.DataSetGCM.compute_hmean" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the horizontal mean.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.datasets.base.DataSetGCM.compute_hmean_representative">
+<tt class="descname">compute_hmean_representative</tt><big>(</big><em>f_xy</em>, <em>ip=None</em>, <em>beta=None</em><big>)</big><a class="headerlink" href="#spectratmo.datasets.base.DataSetGCM.compute_hmean_representative" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the horizontal &#8220;representative&#8221; mean.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p class="rubric">Classes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#spectratmo.datasets.base.DataSetGCM" title="spectratmo.datasets.base.DataSetGCM"><tt class="xref py py-obj docutils literal"><span class="pre">DataSetGCM</span></tt></a>([name,&nbsp;path,&nbsp;lmax,&nbsp;nlon,&nbsp;nlat,&nbsp;...])</td>
+<td>Represent a dataset.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.datasets.puma.html" title="spectratmo.datasets.puma"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.datasets.puma.html" title="spectratmo.datasets.puma"
+             >previous</a> |</li>
+        <li><a href="../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="spectratmo.datasets.html" >spectratmo.datasets</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Pierre Augier.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,350 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spectratmo.spherical_harmonics &mdash; SpectrAtmo 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="SpectrAtmo 0.0.0 documentation" href="../index.html" />
+    <link rel="next" title="spectratmo.util" href="spectratmo.util.html" />
+    <link rel="prev" title="spectratmo.planets" href="spectratmo.planets.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.util.html" title="spectratmo.util"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.planets.html" title="spectratmo.planets"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">SpectrAtmo 0.0.0</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">spectratmo.spherical_harmonics</a><ul>
+<li><a class="reference internal" href="#spherical-harmonics-transforms-and-operators">Spherical harmonics transforms and operators</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="spectratmo.planets.html"
+                        title="previous chapter">spectratmo.planets</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="spectratmo.util.html"
+                        title="next chapter">spectratmo.util</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/generated/spectratmo.spherical_harmonics.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="module-spectratmo.spherical_harmonics">
+<span id="spectratmo-spherical-harmonics"></span><h1>spectratmo.spherical_harmonics<a class="headerlink" href="#module-spectratmo.spherical_harmonics" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="spherical-harmonics-transforms-and-operators">
+<h2>Spherical harmonics transforms and operators<a class="headerlink" href="#spherical-harmonics-transforms-and-operators" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="spectratmo.spherical_harmonics.EasySHT">
+<em class="property">class </em><tt class="descclassname">spectratmo.spherical_harmonics.</tt><tt class="descname">EasySHT</tt><big>(</big><em>lmax=15</em>, <em>mmax=None</em>, <em>mres=1</em>, <em>norm=1</em>, <em>nlat=None</em>, <em>nlon=None</em>, <em>flags=8708</em>, <em>polar_opt=1e-08</em>, <em>nl_order=2</em>, <em>radius=6367470.0</em><big>)</big><a class="reference internal" href="../_modules/spectratmo/spherical_harmonics.html#EasySHT"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Simple possibilities of shtns.</p>
+<p>Less possibilities but very simple to use...  It has been written
+specially for atmospheric applications.</p>
+<p>Creation of a default instance:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">esh</span> <span class="o">=</span> <span class="n">EasySHT</span><span class="p">(</span><span class="n">lmax</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>lmax</strong> : number {15}</p>
+<blockquote>
+<div><p>Truncation degree.</p>
+</div></blockquote>
+<p><strong>mmax</strong> : {None, int}</p>
+<blockquote>
+<div><p>If is None, triangular truncation.</p>
+</div></blockquote>
+<p><strong>mres</strong> : 1</p>
+<blockquote>
+<div><p>Azimutal symmetry coefficient (see shtns documentation).</p>
+</div></blockquote>
+<p><strong>norm=shtns.sht_fourpi</strong></p>
+<blockquote>
+<div><p>For SH with quadratic mean equal to unity.</p>
+</div></blockquote>
+<p><strong>nlat</strong> : {None, int}</p>
+<blockquote>
+<div><p>If None, computed by shtns to avoid aliasing.</p>
+</div></blockquote>
+<p><strong>nlon</strong> : {None, int}</p>
+<blockquote>
+<div><p>If None, computed by shtns to avoid aliasing.</p>
+</div></blockquote>
+<p><strong>flags</strong> : {sht_quick_init|SHT_PHI_CONTIGUOUS|SHT_SOUTH_POLE_FIRST, int}</p>
+<blockquote>
+<div><p>Option flag for shtns.</p>
+</div></blockquote>
+<p><strong>polar_opt</strong> : {1.0e-8, float}</p>
+<blockquote>
+<div><p>Polar optimization threshold.</p>
+</div></blockquote>
+<p><strong>nl_order</strong> : {2, int}</p>
+<blockquote>
+<div><p>Nonlinear order of the equations (used to compute nlat and nlon).</p>
+</div></blockquote>
+<p><strong>radius</strong> : {radius_earth, number}</p>
+<blockquote class="last">
+<div><p>Radius of the sphere (in meters)</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>In contrast as with shtns, with easypysht the meridional unit
+vector points towards the North if shtns.SHT_SOUTH_POLE_FIRST is
+used (this is the default) and it points towards the South if
+shtns.SHT_SOUTH_POLE_FIRST is not given in flags (thus there is a
+change of sign in the meridional velocity).</p>
+<p>easypysht has been written for atmospheric applications thus some
+usual notations are used.</p>
+<p>Here are some definitions useful to understand the code:</p>
+<ul class="simple">
+<li>l     denotes the degree of the spherical harmonic functions</li>
+<li>m     denotes the order of the spherical harmonic functions</li>
+<li>SH    denotes spherical harmonic (spectral array)</li>
+<li>spat  denotes spatial array</li>
+<li>lat   denotes latitude</li>
+<li>lon   denotes longitude</li>
+<li>kh    denotes horizontal wavenumber</li>
+<li>u     denotes longitudinal velocity</li>
+<li>v     denotes meridional velocity (the sign depends on the used base)</li>
+<li>hdiv  denotes horizontal divergence</li>
+<li>hrot  denotes vertical vorticity (curl on the sphere)</li>
+<li>grad  denotes the horizontal gradient</li>
+</ul>
+<p>Variables and functions about spectral space array:
+lmax, mmax, mres, nlm, idx_lm(), l_idx, m_idx, l2_idx</p>
+<p>Variables about grid and real space array:
+nlat, nlon, lats, lons, sin_lats, LATS, LONS</p>
+<p>Variables for spectra:
+l2_l, kh_l</p>
+<p>self.sh is the instance of the class sht defined in shtns.py.
+All functions and variables of this class can be used directly
+from this instance, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">esh</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">sh_to_point</span><span class="p">(</span><span class="n">f_lm</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where t is the colatitude and phi is the longitude.</p>
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT._array_desh_from_sh">
+<tt class="descname">_array_desh_from_sh</tt><big>(</big><em>field_lm</em>, <em>key_field</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT._array_desh_from_sh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the array_desh (density of energy) from an field_lm</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT._spectrum_from_array_desh">
+<tt class="descname">_spectrum_from_array_desh</tt><big>(</big><em>array_desh</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT._spectrum_from_array_desh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute spectrum(l) from array_desh(ilm)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.convert2npcomplex">
+<tt class="descname">convert2npcomplex</tt><big>(</big><em>f_lm</em><big>)</big><a class="reference internal" href="../_modules/spectratmo/spherical_harmonics.html#EasySHT.convert2npcomplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.convert2npcomplex" title="Permalink to this definition">¶</a></dt>
+<dd><p>in order to open file with complex...</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2fieldssh">
+<tt class="descname">cospectrum_from_2fieldssh</tt><big>(</big><em>f_lm</em>, <em>g_lm</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2fieldssh" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute cospectrum(l) from f_lm(ilm) and g_lm(ilm)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2vectorssh">
+<tt class="descname">cospectrum_from_2vectorssh</tt><big>(</big><em>f_lon_lm</em>, <em>f_lat_lm</em>, <em>g_lon_lm</em>, <em>g_lat_lm</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2vectorssh" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute cospectrum(l)...</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.create_array_sh">
+<tt class="descname">create_array_sh</tt><big>(</big><em>value=None</em>, <em>dtype=&lt;type 'complex'&gt;</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.create_array_sh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an array representing a field in spectral space.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.create_array_spat">
+<tt class="descname">create_array_spat</tt><big>(</big><em>value=None</em><big>)</big><a class="reference internal" href="../_modules/spectratmo/spherical_harmonics.html#EasySHT.create_array_spat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.create_array_spat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an array representing a field in spatial space.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.gradf_from_fsh">
+<tt class="descname">gradf_from_fsh</tt><big>(</big><em>f_lm</em>, <em>gradf_lon=None</em>, <em>gradf_lat=None</em>, <em>PRINT_TIME=False</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.gradf_from_fsh" title="Permalink to this definition">¶</a></dt>
+<dd><p>gradf from fsh.</p>
+<p>Compute the gradient of a function f from its spherical
+harmonic coeff f_lm (gradf_lon and gradf_lat are overwritten)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.hdivrotsh_from_uv">
+<tt class="descname">hdivrotsh_from_uv</tt><big>(</big><em>uu</em>, <em>vv</em>, <em>hdiv_lm=None</em>, <em>hrot_lm=None</em>, <em>PRINT_TIME=False</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.hdivrotsh_from_uv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute hdivrotsh from uuvv.</p>
+<p>(div_lm and rot_lm are overwritten)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.idx_lm">
+<tt class="descname">idx_lm</tt><big>(</big><em>self</em>, <em>l</em>, <em>m</em><big>)</big><a class="reference internal" href="../_modules/spectratmo/spherical_harmonics.html#EasySHT.idx_lm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.idx_lm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.sh_from_spat">
+<tt class="descname">sh_from_spat</tt><big>(</big><em>field</em>, <em>field_lm=None</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.sh_from_spat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Spherical harmonic transform.</p>
+<p>examples:
+f_lm = sh_from_spat(f)</p>
+<p>or if f_lm already exists:
+sh_from_spat(f, f_lm)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.spat_from_sh">
+<tt class="descname">spat_from_sh</tt><big>(</big><em>field_lm</em>, <em>field=None</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.spat_from_sh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inverse spherical harmonic transform.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.spectrum_from_sh">
+<tt class="descname">spectrum_from_sh</tt><big>(</big><em>field_lm</em>, <em>key_field</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.spectrum_from_sh" title="Permalink to this definition">¶</a></dt>
+<dd><p>compute spectrum from field_lm</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.uv_from_hdivrotsh">
+<tt class="descname">uv_from_hdivrotsh</tt><big>(</big><em>hdiv_lm</em>, <em>hrot_lm</em>, <em>uu=None</em>, <em>vv=None</em>, <em>PRINT_TIME=False</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.uv_from_hdivrotsh" title="Permalink to this definition">¶</a></dt>
+<dd><p>u, v from h, div, rot (u and v are overwritten)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="spectratmo.spherical_harmonics.EasySHT.uv_from_uDuRsh">
+<tt class="descname">uv_from_uDuRsh</tt><big>(</big><em>uD_lm</em>, <em>uR_lm</em>, <em>uu=None</em>, <em>vv=None</em>, <em>PRINT_TIME=False</em><big>)</big><a class="headerlink" href="#spectratmo.spherical_harmonics.EasySHT.uv_from_uDuRsh" title="Permalink to this definition">¶</a></dt>
+<dd><p>u, v from uD, uR (uu and vv are overwritten)</p>
+</dd></dl>
+
+</dd></dl>
+
+<p class="rubric">Functions</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><tt class="xref py py-obj docutils literal"><span class="pre">bin_int</span></tt>(n,&nbsp;width)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><tt class="xref py py-obj docutils literal"><span class="pre">time</span></tt>(()&nbsp;-&gt;&nbsp;floating&nbsp;point&nbsp;number)</td>
+<td>Return the current time in seconds since the Epoch.</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Classes</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#spectratmo.spherical_harmonics.EasySHT" title="spectratmo.spherical_harmonics.EasySHT"><tt class="xref py py-obj docutils literal"><span class="pre">EasySHT</span></tt></a>([lmax,&nbsp;mmax,&nbsp;mres,&nbsp;norm,&nbsp;nlat,&nbsp;...])</td>
+<td>Simple possibilities of shtns.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.util.html" title="spectratmo.util"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="spectratmo.planets.html" title="spectratmo.planets"
+             >previous</a> |</li>
+        <li><a href="../index.html">SpectrAtmo 0.0.0</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Pierre Augier.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

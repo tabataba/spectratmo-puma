@@ -1,0 +1,78 @@
+Metadata-Version: 1.1
+Name: spectratmo
+Version: 0.0.0
+Summary: Toolkit for doing spectral analysing of GCM results.
+Home-page: https://bitbucket.org/paugier/spectatmos
+Author: Pierre Augier
+Author-email: pierre.augier@legi.cnrs.fr
+License: CeCILL B
+Description: 
+        SpectrAtmo is a Python package for doing spectral analysing of GCM
+        results.
+        
+        It uses the library for Spherical Harmonic `SHTns
+        <http://users.isterre.fr/nschaeff/SHTns/>`_.
+        
+        License
+        -------
+        
+        SpectrAtmo is distributed under the CeCILL-B_ License, enabling reuse
+        with few restrictions (GPL compatible french License).
+        
+        .. _CeCILL-B: http://www.cecill.info/index.en.html
+        
+        If you use SpectAtmos for research work, please `cite this paper
+        <http://dx.doi.org/10.1175/JAS-D-12-0281.1>`_::
+        
+          @article {AugierLindborg2013,
+            author = {Pierre Augier and Erik Lindborg},
+            title = {A New Formulation of the Spectral Energy Budget of the Atmosphere,
+            with Application to Two High-Resolution General Circulation Models},
+            journal = {J. Atmos. Sci.},
+            doi = {10.1175/JAS-D-12-0281.1},
+            volume = {70}, number = {7}, pages = {2293--2308},
+            year = {2013},
+          }
+        
+        
+        Installation
+        ------------
+        
+        Install first `SHTns <http://users.isterre.fr/nschaeff/SHTns/>`_.
+        
+        **Optional dependencies to load data that need to be installed manually**
+        
+        - `grads <http://iges.org/grads/>`_,
+        
+        - `pygrib <https://github.com/jswhit/pygrib>`_,
+        
+        - `netcdf4-python <https://github.com/Unidata/netcdf4-python>`_ (for
+          netCDF4 files, you won't need this package since we use `h5netcdf
+          <https://github.com/shoyer/h5netcdf>`_).
+          
+        To install the package spectatmos in development mode, from the root
+        directory, run (you may have to use a virtualenv or sudo or to add
+        `--user` at the end of the line)::
+        
+          python setup.py develop
+        
+        Tests
+        -----
+        
+        From the root directory or from any of the "test" directories::
+        
+          python -m unittest discover
+        
+        Please report bugs and feature request on the `issue tracker
+        <https://bitbucket.org/paugier/spectatmos/issues>`_.
+        
+Keywords: spectral analysis,GCM,Fluid dynamics,research
+Platform: UNKNOWN
+Classifier: Development Status :: 1 - Planning
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Topic :: Scientific/Engineering
+Classifier: License :: OSI Approved
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7

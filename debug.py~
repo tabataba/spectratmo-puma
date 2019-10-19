@@ -1,0 +1,19 @@
+import shtns
+sh1 = shtns.sht(127, 127, 1, norm=1)
+nla,nlo=sh1.set_grid(nlat=192,nphi=384,flags=8708,polar_opt=1e-08, nl_order=2)
+
+radius=6367470.0
+l2=sh1.l*(sh1.l+1)
+
+hd = ds.oper.create_array_sh()
+hr = ds.oper.create_array_sh()
+
+sh1.spat_to_SHsphtor(v2d, u2d, hd, hr)
+hd1=l2*hd/radius
+hr1=l2*hr/radius
+
+
+
+sh2 = shtns.sht(127, 127, 1, norm=1)
+nla,nlo=sh2.set_grid(nlat=192,nphi=384,flags=516,polar_opt=1e-08, nl_order=2)
+sh2.spat_to_SHsphtor(v2d, u2d, hd, hr);hd2=l2*hd/radius;hr2=l2*hr/radius

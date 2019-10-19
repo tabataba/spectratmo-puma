@@ -1,0 +1,15 @@
+syntax: glob
+
+*~
+*tmp
+\#*\#
+
+session.*
+
+elpa*
+
+tramp
+
+.cask
+
+color-theme-6.6.0

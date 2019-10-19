@@ -1,0 +1,11 @@
+syntax: glob
+
+*.pyc
+*~
+
+*.egg-info*
+
+*tmp
+
+doc/_build/*
+doc/generated

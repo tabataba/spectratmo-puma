@@ -1,0 +1,645 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spectratmo.spherical_harmonics &mdash; SpectrAtmo 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="SpectrAtmo 0.0.0 documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for spectratmo.spherical_harmonics</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;Spherical harmonics transforms and operators</span>
+<span class="sd">===============================================</span>
+
+<span class="sd">.. autoclass:: EasySHT</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :private-members:</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+<span class="kn">import</span> <span class="nn">shtns</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">flags for normalization (norm = ...)</span>
+<span class="sd"> sht_orthonormal = 0  # orthonormalized spherical harmonics (default).</span>
+<span class="sd"> sht_fourpi      = 1  # Geodesy and spectral analysis : 4.pi normalization.</span>
+<span class="sd"> sht_schmidt     = 2  # Schmidt semi-normalized : 4.pi/(2l+1)</span>
+
+<span class="sd">flags for spatial data layouts and grids used by SHTns</span>
+<span class="sd">use the bitwise operator OR &quot;|&quot; to separate the different flags</span>
+<span class="sd">for example:</span>
+<span class="sd">flags = shtns.sht_quick_init|shtns.SHT_PHI_CONTIGUOUS|shtns.SHT_SOUTH_POLE_FI</span>
+<span class="sd">RST</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">bin_int</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">width</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">((</span><span class="n">n</span> <span class="o">&gt;&gt;</span> <span class="n">i</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">xrange</span><span class="p">(</span><span class="n">width</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+
+<span class="n">sht_orthonormal</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_orthonormal</span>
+<span class="n">sht_fourpi</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_fourpi</span>
+<span class="n">sht_schmidt</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_schmidt</span>
+
+<span class="n">sht_gauss</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_gauss</span>
+<span class="n">sht_auto</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_auto</span>
+<span class="n">sht_reg_fast</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_reg_fast</span>
+<span class="n">sht_reg_dct</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_reg_dct</span>
+<span class="n">sht_quick_init</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_quick_init</span>
+<span class="n">sht_reg_poles</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_reg_poles</span>
+<span class="n">sht_gauss_fly</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht_gauss_fly</span>
+
+<span class="n">SHT_THETA_CONTIGUOUS</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_THETA_CONTIGUOUS</span>
+
+<span class="n">SHT_PHI_CONTIGUOUS</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_PHI_CONTIGUOUS</span>
+
+<span class="n">SHT_NO_CS_PHASE</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_NO_CS_PHASE</span>
+<span class="n">SHT_REAL_NORM</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_REAL_NORM</span>
+<span class="n">SHT_SCALAR_ONLY</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_SCALAR_ONLY</span>
+<span class="n">SHT_SOUTH_POLE_FIRST</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_SOUTH_POLE_FIRST</span>
+
+
+<div class="viewcode-block" id="EasySHT"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT">[docs]</a><span class="k">class</span> <span class="nc">EasySHT</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;easypysht is a class for using some simple possibilities of shtns :</span>
+<span class="sd">    less possibilities but very simple to use...</span>
+<span class="sd">    It has been written specially for atmospheric applications.</span>
+
+<span class="sd">    Creation of a default instance::</span>
+
+<span class="sd">      esh = EasySHT(lmax=15)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    lmax : number {15}</span>
+<span class="sd">        Truncation degree</span>
+
+<span class="sd">    mmax : {None, int}</span>
+<span class="sd">        If is None, triangular truncation</span>
+
+<span class="sd">    mres : 1</span>
+<span class="sd">        Azimutal symmetry coefficient (see shtns documentation).</span>
+
+<span class="sd">    norm=shtns.sht_fourpi</span>
+<span class="sd">        Sor SH with quadratic mean equal to unity</span>
+
+<span class="sd">    nlat : {None, int}</span>
+<span class="sd">        If None, computed by shtns to avoid aliasing.</span>
+
+<span class="sd">    nlon : {None, int}</span>
+<span class="sd">        If None, computed by shtns to avoid aliasing.</span>
+
+<span class="sd">    flags : {sht_quick_init|SHT_PHI_CONTIGUOUS|SHT_SOUTH_POLE_FIRST, int}</span>
+<span class="sd">        Option flag for shtns.</span>
+
+<span class="sd">    polar_opt : {1.0e-8, float}</span>
+<span class="sd">        Polar optimization threshold.</span>
+
+<span class="sd">    nl_order : {2, int}</span>
+<span class="sd">        Nonlinear order of the equations (used to compute nlat and nlon).</span>
+
+<span class="sd">    radius : {radius_earth, number}</span>
+<span class="sd">        Radius of the sphere (in meters)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    In contrast as with shtns, with easypysht the meridional unit</span>
+<span class="sd">    vector points towards the North if shtns.SHT_SOUTH_POLE_FIRST is</span>
+<span class="sd">    used (this is the default) and it points towards the South if</span>
+<span class="sd">    shtns.SHT_SOUTH_POLE_FIRST is not given in flags (thus there is a</span>
+<span class="sd">    change of sign in the meridional velocity).</span>
+
+<span class="sd">    easypysht has been written for atmospheric applications thus some</span>
+<span class="sd">    usual notations are used.</span>
+
+<span class="sd">    Here are some definitions useful to understand the code:</span>
+
+<span class="sd">    - l     denotes the degree of the spherical harmonic functions</span>
+<span class="sd">    - m     denotes the order of the spherical harmonic functions</span>
+<span class="sd">    - SH    denotes spherical harmonic (spectral array)</span>
+<span class="sd">    - spat  denotes spatial array</span>
+
+<span class="sd">    - lat   denotes latitude</span>
+<span class="sd">    - lon   denotes longitude</span>
+<span class="sd">    - kh    denotes horizontal wavenumber</span>
+<span class="sd">    - uu    denotes longitudinal velocity</span>
+<span class="sd">    - vv    denotes meridional velocity (the sign depends on the used base)</span>
+
+<span class="sd">    - hdiv  denotes horizontal divergence</span>
+<span class="sd">    - hrot  denotes vertical vorticity (curl on the sphere)</span>
+<span class="sd">    - grad  denotes the horizontal gradient</span>
+
+<span class="sd">    Variables and functions about spectral space array:</span>
+<span class="sd">    lmax, mmax, mres, nlm, idx_lm(), l_idx, m_idx, l2_idx</span>
+
+<span class="sd">    Variables about grid and real space array:</span>
+<span class="sd">    nlat, nlon, lats, lons, sin_lats, LATS, LONS</span>
+
+<span class="sd">    Variables for spectra:</span>
+<span class="sd">    l2_l, kh_l</span>
+
+<span class="sd">    self.sh is the instance of the class sht defined in shtns.py.</span>
+<span class="sd">    All functions and variables of this class can be used directly</span>
+<span class="sd">    from this instance, for example::</span>
+
+<span class="sd">      esh.sh.SH_to_point(f_lm, cost, phi)</span>
+
+<span class="sd">    where t is the colatitude and phi is the longitude.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">radius_earth</span> <span class="o">=</span> <span class="mf">6367470.</span>    <span class="c"># earth radius (m)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lmax</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+                 <span class="n">mmax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mres</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">norm</span><span class="o">=</span><span class="n">shtns</span><span class="o">.</span><span class="n">sht_fourpi</span><span class="p">,</span>
+                 <span class="n">nlat</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">nlon</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">flags</span><span class="o">=</span><span class="p">(</span><span class="n">shtns</span><span class="o">.</span><span class="n">sht_quick_init</span> <span class="o">|</span> <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_PHI_CONTIGUOUS</span> <span class="o">|</span>
+                        <span class="n">shtns</span><span class="o">.</span><span class="n">SHT_SOUTH_POLE_FIRST</span><span class="p">),</span>
+                 <span class="n">polar_opt</span><span class="o">=</span><span class="mf">1.0e-8</span><span class="p">,</span>
+                 <span class="n">nl_order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                 <span class="n">radius</span><span class="o">=</span><span class="n">radius_earth</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">lmax</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mmax</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">mres</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c"># triangular truncation</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lmax</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mres</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">lmax</span><span class="p">)</span><span class="o">/</span><span class="n">mres</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mres</span> <span class="o">=</span> <span class="n">mres</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span> <span class="o">=</span> <span class="n">shtns</span><span class="o">.</span><span class="n">sht</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mmax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mres</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+
+        <span class="n">bin_flags</span> <span class="o">=</span> <span class="n">bin_int</span><span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="mi">14</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">bin_flags</span><span class="p">[</span><span class="o">-</span><span class="mi">14</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;1&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span> <span class="o">=</span> <span class="s">&#39;south_to_north&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span> <span class="o">=</span> <span class="s">&#39;north_to_south&#39;</span>
+
+        <span class="k">if</span> <span class="n">nlat</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">nlat</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">nlon</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">nlon</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">set_grid</span><span class="p">(</span>
+            <span class="n">nlat</span><span class="o">=</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nphi</span><span class="o">=</span><span class="n">nlon</span><span class="p">,</span>
+            <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span> <span class="n">polar_opt</span><span class="o">=</span><span class="n">polar_opt</span><span class="p">,</span> <span class="n">nl_order</span><span class="o">=</span><span class="n">nl_order</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sin_lats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">cos_theta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span> <span class="o">*</span> <span class="mf">360.</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">mres</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sin_lats</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="mf">180.</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">l</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nlm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">nlm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta</span> <span class="o">=</span> <span class="mf">360.</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">mres</span><span class="p">)</span>
+        <span class="c"># create arrays 2D lats et lons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">LONS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">LATS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lons</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cosLATS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">LATS</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+        <span class="n">lrange</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l2_l</span> <span class="o">=</span> <span class="n">lrange</span><span class="o">*</span><span class="p">(</span><span class="n">lrange</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kh_l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_l</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">complex64_save_netCFD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span>
+            <span class="p">[(</span><span class="s">&#39;real&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;imag&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)])</span>
+
+<div class="viewcode-block" id="EasySHT.idx_lm"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.idx_lm">[docs]</a>    <span class="k">def</span> <span class="nf">idx_lm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; idx_lm(self, l,m)&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">l</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="ow">and</span> <span class="mi">0</span><span class="o">&lt;=</span><span class="n">m</span><span class="o">&lt;=</span><span class="n">l</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">idx</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;not (l&gt;=0 and m&gt;=0 and m&lt;=l)&#39;</span><span class="p">)</span>
+
+    <span class="c"># functions for initialisation of field</span>
+</div>
+<div class="viewcode-block" id="EasySHT.create_array_SH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.create_array_SH">[docs]</a>    <span class="k">def</span> <span class="nf">create_array_SH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an array representing a field in spectral space.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span><span class="o">==</span><span class="s">&#39;rand&#39;</span><span class="p">:</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">)</span><span class="o">+</span><span class="mf">1.</span><span class="n">j</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="n">value</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field_lm</span>
+</div>
+<div class="viewcode-block" id="EasySHT.create_array_spat"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.create_array_spat">[docs]</a>    <span class="k">def</span> <span class="nf">create_array_spat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an array representing a field in spatial space.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="s">&#39;rand&#39;</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">value</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">value</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">])</span>
+        <span class="c"># a spatial array matching a grid build with SHT_PHI_CONTIGUOUS</span>
+        <span class="k">return</span> <span class="n">field</span>
+</div>
+    <span class="k">def</span> <span class="nf">convert2complex64_save_netCFD</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_lm</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">f_lm</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">complex64_save_netCFD</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&#39;real&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_lm</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">result</span><span class="p">[</span><span class="s">&#39;imag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f_lm</span><span class="o">.</span><span class="n">imag</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+<div class="viewcode-block" id="EasySHT.convert2npcomplex"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.convert2npcomplex">[docs]</a>    <span class="k">def</span> <span class="nf">convert2npcomplex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_lm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;in order to open file with complex...&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">f_lm</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">real</span> <span class="o">=</span> <span class="n">f_lm</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">imag</span> <span class="o">=</span> <span class="n">f_lm</span><span class="o">.</span><span class="n">imag</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="c"># functions for scalar spherical harmonic transforms (forward and backward)</span>
+</div>
+<div class="viewcode-block" id="EasySHT.SH_from_spat"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.SH_from_spat">[docs]</a>    <span class="k">def</span> <span class="nf">SH_from_spat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">field_lm</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;SH_from_spat(self, field,field_lm=None)</span>
+<span class="sd">        examples:</span>
+<span class="sd">        f_lm = SH_from_spat(f)</span>
+
+<span class="sd">        or if f_lm already exists:</span>
+<span class="sd">        SH_from_spat(f, f_lm)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s">&#39;float&#39;</span><span class="p">):</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field_lm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">spat_to_SH</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">field_lm</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field_lm</span>
+</div>
+<div class="viewcode-block" id="EasySHT.spat_from_SH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.spat_from_SH">[docs]</a>    <span class="k">def</span> <span class="nf">spat_from_SH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_lm</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; spat_from_SH(self, field_lm, field=None)&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">field_lm</span><span class="o">.</span><span class="n">dtype</span><span class="o">!=</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="s">&#39;complex&#39;</span><span class="p">):</span>
+            <span class="n">field_lm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">field_lm</span><span class="p">,</span> <span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">field</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">SH_to_spat</span><span class="p">(</span><span class="n">field_lm</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">field</span>
+</div>
+    <span class="k">def</span> <span class="nf">chrono_sht</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nb_sht</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_sht</span><span class="p">):</span>
+            <span class="n">f_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SH_from_spat</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;    mean time for 1 forward SHT: {:3.6f} s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span><span class="o">/</span><span class="n">nb_sht</span><span class="p">))</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_sht</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spat_from_SH</span><span class="p">(</span><span class="n">f_lm</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;    mean time for 1 backward SHT: {:3.6f} s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span><span class="o">/</span><span class="n">nb_sht</span><span class="p">))</span>
+        <span class="n">uu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
+        <span class="n">vv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">)</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_sht</span><span class="p">):</span>
+            <span class="n">hdiv</span><span class="p">,</span> <span class="n">hrot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hdivrotSH_from_uuvv</span><span class="p">(</span><span class="n">uu</span><span class="p">,</span> <span class="n">vv</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;    mean time for hdivrotSH_from_uuvv vectorial SHT: {:3.6f} s&#39;</span>
+              <span class="o">+</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span><span class="o">/</span><span class="n">nb_sht</span><span class="p">))</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_sht</span><span class="p">):</span>
+            <span class="n">uu</span><span class="p">,</span> <span class="n">vv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uuvv_from_hdivrotSH</span><span class="p">(</span><span class="n">hdiv</span><span class="p">,</span> <span class="n">hrot</span><span class="p">)</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;    mean time for uuvv_from_hdivrotSH vectorial SHT: {:3.6f} s&#39;</span>
+              <span class="o">+</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">)</span><span class="o">/</span><span class="n">nb_sht</span><span class="p">))</span>
+
+    <span class="c"># functions for 2D vectorial spherical harmonic transforms</span>
+<div class="viewcode-block" id="EasySHT.uuvv_from_hdivrotSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.uuvv_from_hdivrotSH">[docs]</a>    <span class="k">def</span> <span class="nf">uuvv_from_hdivrotSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdiv_lm</span><span class="p">,</span> <span class="n">hrot_lm</span><span class="p">,</span> <span class="n">uu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vv</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                            <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        uu vv from h, div, rot (uu and vv are overwritten)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">uu</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">uu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+            <span class="n">vv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+        <span class="n">uD_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="n">uR_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="n">COND</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="o">&gt;</span><span class="mi">0</span>
+        <span class="n">uD_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">hdiv_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">uR_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">=</span> <span class="n">hrot_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">SHsphtor_to_spat</span><span class="p">(</span><span class="n">uD_lm</span><span class="p">,</span> <span class="n">uR_lm</span><span class="p">,</span> <span class="n">vv</span><span class="p">,</span> <span class="n">uu</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span><span class="o">==</span><span class="s">&#39;south_to_north&#39;</span><span class="p">:</span>
+            <span class="n">vv</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">vv</span><span class="o">+</span><span class="mi">0</span>       <span class="c"># because SHTns uses colatitude basis</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;backward 2D vectorial SH transform done in &#39;</span>
+                  <span class="s">&#39;{:4.3f} s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">uu</span><span class="p">,</span> <span class="n">vv</span>
+</div>
+<div class="viewcode-block" id="EasySHT.uuvv_from_uDuRSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.uuvv_from_uDuRSH">[docs]</a>    <span class="k">def</span> <span class="nf">uuvv_from_uDuRSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uD_lm</span><span class="p">,</span> <span class="n">uR_lm</span><span class="p">,</span> <span class="n">uu</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vv</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        uu vv from uD, uR (uu and vv are overwritten)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">uu</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">uu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+            <span class="n">vv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">SHsphtor_to_spat</span><span class="p">(</span><span class="n">uD_lm</span><span class="p">,</span> <span class="n">uR_lm</span><span class="p">,</span> <span class="n">vv</span><span class="p">,</span> <span class="n">uu</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span><span class="o">==</span><span class="s">&#39;south_to_north&#39;</span><span class="p">:</span>
+            <span class="n">vv</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="n">vv</span><span class="o">+</span><span class="mi">0</span>       <span class="c"># because SHTns uses colatitude basis</span>
+
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;backward 2D vectorial SH transform done in &#39;</span>
+                  <span class="s">&#39;{:4.3f} s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">uu</span><span class="p">,</span> <span class="n">vv</span>
+
+
+</div>
+<div class="viewcode-block" id="EasySHT.hdivrotSH_from_uuvv"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.hdivrotSH_from_uuvv">[docs]</a>    <span class="k">def</span> <span class="nf">hdivrotSH_from_uuvv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uu</span><span class="p">,</span> <span class="n">vv</span><span class="p">,</span> <span class="n">hdiv_lm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">hrot_lm</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                            <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        hdivrotSH_from_uuvv</span>
+<span class="sd">        (div_lm and rot_lm are overwritten)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">hdiv_lm</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">hdiv_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">()</span>
+            <span class="n">hrot_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span><span class="o">==</span><span class="s">&#39;south_to_north&#39;</span><span class="p">:</span>
+            <span class="n">vv</span> <span class="o">=</span> <span class="o">-</span><span class="n">vv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">spat_to_SHsphtor</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">uu</span><span class="p">,</span> <span class="n">hdiv_lm</span><span class="p">,</span> <span class="n">hrot_lm</span><span class="p">)</span>
+        <span class="c"># in fact there is uD_lm in hdiv_lm and</span>
+        <span class="c">#                  uR_lm in hrot_lm</span>
+        <span class="c"># we compute div_lm and rot_lm</span>
+        <span class="n">hdiv_lm</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span> <span class="o">*</span> <span class="n">hdiv_lm</span><span class="p">[:]</span> <span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">hrot_lm</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span> <span class="o">*</span> <span class="n">hrot_lm</span><span class="p">[:]</span> <span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;forward 2D vectorial SH transform done in &#39;</span>
+                  <span class="s">&#39;{:4.3f} s&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">hdiv_lm</span><span class="p">,</span> <span class="n">hrot_lm</span>
+</div>
+    <span class="k">def</span> <span class="nf">hdivrotSH_from_uDuRSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uD_lm</span><span class="p">,</span> <span class="n">uR_lm</span><span class="p">):</span>
+        <span class="n">hdiv_lm</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span> <span class="o">*</span> <span class="n">uD_lm</span> <span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">hrot_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span> <span class="o">*</span> <span class="n">uR_lm</span> <span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="k">return</span> <span class="n">hdiv_lm</span><span class="p">,</span> <span class="n">hrot_lm</span>
+
+    <span class="k">def</span> <span class="nf">uDuRSH_from_hdivrotSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hdiv_lm</span><span class="p">,</span> <span class="n">hrot_lm</span><span class="p">):</span>
+        <span class="n">uD_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="n">uR_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="n">COND</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="o">&gt;</span><span class="mi">0</span>
+        <span class="n">uD_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">hdiv_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">uR_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">=</span> <span class="o">+</span><span class="n">hrot_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="k">return</span> <span class="n">uD_lm</span><span class="p">,</span> <span class="n">uR_lm</span>
+
+
+
+<div class="viewcode-block" id="EasySHT.gradf_from_fSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.gradf_from_fSH">[docs]</a>    <span class="k">def</span> <span class="nf">gradf_from_fSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_lm</span><span class="p">,</span> <span class="n">gradf_lon</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">gradf_lat</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;gradf from fSH</span>
+
+<span class="sd">        compute the gradient of a function f from its spherical</span>
+<span class="sd">        harmonic coeff f_lm (gradf_lon and gradf_lat are overwritten)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">gradf_lon</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">gradf_lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">gradf_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c"># becareful bug if not 0!!!</span>
+<span class="c">#       We do not use SHsph_to_spat() because it seems that there is a problem</span>
+<span class="c">####    self.sh.SHsph_to_spat(f_lm, gradf_lat, gradf_lon)</span>
+<span class="c">#       instead we use SHsphtor_to_spat(...) with tor_lm= zeros_lm</span>
+        <span class="n">zeros_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">SHsphtor_to_spat</span><span class="p">(</span><span class="n">f_lm</span><span class="p">,</span> <span class="n">zeros_lm</span><span class="p">,</span> <span class="n">gradf_lat</span><span class="p">,</span> <span class="n">gradf_lon</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_lat</span><span class="o">==</span><span class="s">&#39;south_to_north&#39;</span><span class="p">:</span>
+            <span class="n">sign_inv_vv</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sign_inv_vv</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">gradf_lat</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">+</span><span class="n">gradf_lat</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="o">*</span><span class="n">sign_inv_vv</span>
+        <span class="n">gradf_lon</span><span class="p">[:]</span> <span class="o">=</span> <span class="o">+</span><span class="n">gradf_lon</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;backward 2D vectorial SH transform done in {:4.3f} s&#39;</span>
+                  <span class="o">+</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">gradf_lon</span><span class="p">,</span> <span class="n">gradf_lat</span>
+
+
+
+</div>
+    <span class="k">def</span> <span class="nf">spat3D_from_SH3D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f_lm_3D</span><span class="p">,</span> <span class="n">f3D</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="n">nvert</span> <span class="o">=</span> <span class="n">f_lm_3D</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">f3D</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f3D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">nvert</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">],</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">iz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nvert</span><span class="p">):</span>
+            <span class="n">f2D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spat_from_SH</span><span class="p">(</span><span class="n">f_lm_3D</span><span class="p">[</span><span class="n">iz</span><span class="p">])</span>
+            <span class="n">f3D</span><span class="p">[</span><span class="n">iz</span><span class="p">]</span> <span class="o">=</span> <span class="n">f2D</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;3D SHT done in {0:3.2f} s ({1:2n}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">,</span> <span class="n">nvert</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">f3D</span>
+
+
+
+    <span class="k">def</span> <span class="nf">SH3D_from_spat3D</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f3D</span><span class="p">,</span> <span class="n">f_lm3D</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">PRINT_TIME</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+        <span class="n">nvert</span> <span class="o">=</span> <span class="n">f3D</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">f_lm3D</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f_lm3D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">nvert</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">],</span> <span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">iz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nvert</span><span class="p">):</span>
+            <span class="n">f_lm3D</span><span class="p">[</span><span class="n">iz</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">SH_from_spat</span><span class="p">(</span><span class="n">f3D</span><span class="p">[</span><span class="n">iz</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">PRINT_TIME</span><span class="p">:</span>
+            <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;3D SHT done in {0:3.2f} s ({1:2n}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t2</span><span class="o">-</span><span class="n">t1</span><span class="p">,</span> <span class="n">nvert</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">f_lm3D</span>
+
+    <span class="c"># print functions...</span>
+
+    <span class="k">def</span> <span class="nf">print_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">ninstance for spherical harmonic transforms (class easypysht)&#39;</span>
+              <span class="s">&#39;nlat = {0} ; nlon = {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="p">),</span>
+              <span class="s">&#39;1 point every {0:6.2g} km&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                  <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="o">/</span><span class="mi">1000</span><span class="p">),</span>
+              <span class="s">&#39;1 point every {0:6.2g} km (for earth atmosphere)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                  <span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">radius_earth</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">nlon</span><span class="o">/</span><span class="mi">1000</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sh</span><span class="o">.</span><span class="n">print_info</span><span class="p">()</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">print_array_SH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_lm</span><span class="p">,</span> <span class="n">name_field_lm</span><span class="p">,</span> <span class="n">lmax_print</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">lmax_print</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">lmax_print</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="p">])</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">name_field_lm</span><span class="p">,</span> <span class="s">&#39;= &#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">lmax_print</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;n={:2d} &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+                <span class="n">temp_idx</span> <span class="o">=</span> <span class="n">m</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span> <span class="o">-</span> <span class="p">(</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">m</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span><span class="n">m</span> <span class="o">+</span> <span class="n">n</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&#39;{:8.3g} &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">field_lm</span><span class="p">[</span><span class="n">temp_idx</span><span class="p">])))</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="c"># functions for the computation of spectra and co-spectra</span>
+<div class="viewcode-block" id="EasySHT._spectrum_from_array_deSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT._spectrum_from_array_deSH">[docs]</a>    <span class="k">def</span> <span class="nf">_spectrum_from_array_deSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array_deSH</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute spectrum(l) from array_deSH(ilm)&quot;&quot;&quot;</span>
+        <span class="n">spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ilm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">):</span>
+            <span class="n">spectrum</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span><span class="p">[</span><span class="n">ilm</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">array_deSH</span><span class="p">[</span><span class="n">ilm</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">spectrum</span>
+</div>
+<div class="viewcode-block" id="EasySHT._array_deSH_from_SH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT._array_deSH_from_SH">[docs]</a>    <span class="k">def</span> <span class="nf">_array_deSH_from_SH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_lm</span><span class="p">,</span> <span class="n">key_field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute the array_deSH (density of energy) from an field_lm&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;uu&#39;</span> <span class="ow">or</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;vv&#39;</span><span class="p">:</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">field_lm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mf">2.</span>
+        <span class="k">elif</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;TT&#39;</span> <span class="ow">or</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;ps&#39;</span> <span class="ow">or</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;oo&#39;</span><span class="p">:</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">field_lm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mf">2.</span>
+        <span class="k">elif</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;beta&#39;</span><span class="p">:</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">field_lm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;uD&#39;</span> <span class="ow">or</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;uR&#39;</span><span class="p">:</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="o">*</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">field_lm</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;hdiv&#39;</span> <span class="ow">or</span> <span class="n">key_field</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;hrot&#39;</span><span class="p">:</span>
+            <span class="n">array_deSH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_array_SH</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="n">COND</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="o">&gt;</span><span class="mi">0</span>
+            <span class="n">array_deSH</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">l2_idx</span><span class="p">[</span><span class="n">COND</span><span class="p">]</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span>
+                <span class="n">field_lm</span><span class="p">[</span><span class="n">COND</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;key_field is not correct&#39;</span><span class="p">)</span>
+        <span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">array_deSH</span>
+</div>
+<div class="viewcode-block" id="EasySHT.spectrum_from_SH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.spectrum_from_SH">[docs]</a>    <span class="k">def</span> <span class="nf">spectrum_from_SH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_lm</span><span class="p">,</span> <span class="n">key_field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute spectrum from field_lm&quot;&quot;&quot;</span>
+        <span class="n">array_deSH</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array_deSH_from_SH</span><span class="p">(</span><span class="n">field_lm</span><span class="p">,</span> <span class="n">key_field</span><span class="p">)</span>
+        <span class="n">spectrum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spectrum_from_array_deSH</span><span class="p">(</span><span class="n">array_deSH</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spectrum</span>
+</div>
+<div class="viewcode-block" id="EasySHT.cospectrum_from_2fieldsSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2fieldsSH">[docs]</a>    <span class="k">def</span> <span class="nf">cospectrum_from_2fieldsSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ff_lm</span><span class="p">,</span> <span class="n">gg_lm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute cospectrum(l) from ff_lm(ilm) and gg_lm(ilm)&quot;&quot;&quot;</span>
+        <span class="n">cospectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">array_deSH</span> <span class="o">=</span> <span class="n">ff_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span><span class="o">*</span><span class="n">gg_lm</span> <span class="o">+</span> <span class="n">ff_lm</span><span class="o">*</span><span class="n">gg_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span>
+        <span class="n">array_deSH</span> <span class="o">=</span> <span class="n">array_deSH</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="k">for</span> <span class="n">ilm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">):</span>
+            <span class="n">cospectrum</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span><span class="p">[</span><span class="n">ilm</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">array_deSH</span><span class="p">[</span><span class="n">ilm</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cospectrum</span>
+</div>
+<div class="viewcode-block" id="EasySHT.cospectrum_from_2vectorsSH"><a class="viewcode-back" href="../../generated/spectratmo.spherical_harmonics.html#spectratmo.spherical_harmonics.EasySHT.cospectrum_from_2vectorsSH">[docs]</a>    <span class="k">def</span> <span class="nf">cospectrum_from_2vectorsSH</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ff_lon_lm</span><span class="p">,</span> <span class="n">ff_lat_lm</span><span class="p">,</span>
+                                   <span class="n">gg_lon_lm</span><span class="p">,</span> <span class="n">gg_lat_lm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; compute cospectrum(l)...&quot;&quot;&quot;</span>
+        <span class="n">cospectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lmax</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">array_deSH</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">ff_lon_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span><span class="o">*</span><span class="n">gg_lon_lm</span> <span class="o">+</span> <span class="n">ff_lon_lm</span><span class="o">*</span><span class="n">gg_lon_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span> <span class="o">+</span>
+            <span class="n">ff_lat_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span><span class="o">*</span><span class="n">gg_lat_lm</span> <span class="o">+</span> <span class="n">ff_lat_lm</span><span class="o">*</span><span class="n">gg_lat_lm</span><span class="o">.</span><span class="n">conjugate</span><span class="p">())</span>
+        <span class="n">array_deSH</span> <span class="o">=</span> <span class="n">array_deSH</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">array_deSH</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">m_idx</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>
+
+        <span class="k">for</span> <span class="n">ilm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nlm</span><span class="p">):</span>
+            <span class="n">cospectrum</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">l_idx</span><span class="p">[</span><span class="n">ilm</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">array_deSH</span><span class="p">[</span><span class="n">ilm</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cospectrum</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Pierre Augier.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,235 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spectratmo.datasets.puma &mdash; SpectrAtmo 0.0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="SpectrAtmo 0.0.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for spectratmo.datasets.puma</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;PUMA dataset</span>
+<span class="sd">===============</span>
+
+<span class="sd">.. autoclass:: PUMADataSet</span>
+<span class="sd">   :members:</span>
+<span class="sd">   :private-members:</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">h5netcdf</span> <span class="kn">import</span> <span class="n">File</span>
+
+<span class="kn">from</span> <span class="nn">spectratmo.datasets.base</span> <span class="kn">import</span> <span class="n">DataSetGCM</span>
+
+<span class="kn">from</span> <span class="nn">spectratmo</span> <span class="kn">import</span> <span class="n">userconfig</span>
+
+<span class="kn">from</span> <span class="nn">spectratmo.phys_const</span> <span class="kn">import</span> <span class="n">g</span>
+
+<span class="kn">from</span> <span class="nn">spectratmo.output.global_tmean</span> <span class="kn">import</span> <span class="n">GlobalTMeanWithoutBeta</span>
+
+
+<span class="p">[</span><span class="s">u&#39;lon&#39;</span><span class="p">,</span> <span class="s">u&#39;time&#39;</span><span class="p">,</span> <span class="s">u&#39;lat&#39;</span><span class="p">,</span> <span class="s">u&#39;lev&#39;</span><span class="p">]</span>
+
+
+<span class="n">keys_in_file</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;u&#39;</span><span class="p">:</span> <span class="s">&#39;ua&#39;</span><span class="p">,</span> <span class="s">&#39;v&#39;</span><span class="p">:</span> <span class="s">&#39;va&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">:</span> <span class="s">&#39;wap&#39;</span><span class="p">,</span> <span class="s">&#39;z&#39;</span><span class="p">:</span> <span class="s">&#39;zg&#39;</span><span class="p">,</span> <span class="s">&#39;t&#39;</span><span class="p">:</span> <span class="s">&#39;ta&#39;</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="PUMADataSet"><a class="viewcode-back" href="../../../generated/spectratmo.datasets.puma.html#spectratmo.datasets.puma.PUMADataSet">[docs]</a><span class="k">class</span> <span class="nc">PUMADataSet</span><span class="p">(</span><span class="n">DataSetGCM</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Data set for PUMA data.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+
+<span class="sd">    Before instantiating this class, at least two files have to be</span>
+<span class="sd">    prepared:</span>
+
+<span class="sd">    - in one of the configuration file of spectratmo (for example</span>
+<span class="sd">      $HOME/.spectratmo/config.py), the variables `puma_path` and</span>
+<span class="sd">      `puma_path_result_base` have to be defined.</span>
+
+<span class="sd">    - a config.py file for each set of data (for example in</span>
+<span class="sd">      `puma_path_result_base + &#39;/set0/config.py&#39;`) where an iterable</span>
+<span class="sd">      `instants` and a str `name` have to be defined.</span>
+
+<span class="sd">    parameters</span>
+<span class="sd">    ----------</span>
+
+<span class="sd">    name : str</span>
+
+<span class="sd">      Short name of the dataset.</span>
+
+<span class="sd">    without_sh : {False, bool}</span>
+
+<span class="sd">      Without spherical harmonic operator.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_classes_output</span> <span class="o">=</span> <span class="n">DataSetGCM</span><span class="o">.</span><span class="n">_classes_output</span>
+    <span class="n">_classes_output</span><span class="p">[</span><span class="n">GlobalTMeanWithoutBeta</span><span class="o">.</span><span class="n">_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">GlobalTMeanWithoutBeta</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s">&#39;set0&#39;</span><span class="p">,</span> <span class="n">without_sh</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">reload</span><span class="p">(</span><span class="n">userconfig</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">userconfig</span><span class="o">.</span><span class="n">puma_path</span><span class="p">)</span>
+            <span class="n">puma_path_result_base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span>
+                <span class="n">userconfig</span><span class="o">.</span><span class="n">puma_path_result_base</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">userconfig</span><span class="o">.</span><span class="n">ConfigError</span><span class="p">(</span>
+                <span class="s">&#39;The variables `puma_path` and `puma_path_result_base` have to&#39;</span>
+                <span class="s">&#39; be defined in one of the configuration file.&#39;</span><span class="p">)</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">puma_path_result_base</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_file</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">nlat</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="s">&#39;lat&#39;</span><span class="p">]</span>
+            <span class="n">nlon</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="s">&#39;lon&#39;</span><span class="p">]</span>
+            <span class="n">nlev</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="s">&#39;lev&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pressure_levels</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;lev&#39;</span><span class="p">][:]</span>
+            <span class="c"># ntime = f.dimensions[&#39;ntime&#39;]</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">PUMADataSet</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s">&#39;puma/&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+            <span class="n">nlat</span><span class="o">=</span><span class="n">nlat</span><span class="p">,</span> <span class="n">nlon</span><span class="o">=</span><span class="n">nlon</span><span class="p">,</span> <span class="n">nlev</span><span class="o">=</span><span class="n">nlev</span><span class="p">,</span>
+            <span class="n">without_sh</span><span class="o">=</span><span class="n">without_sh</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_spatial3dvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;phi&#39;</span><span class="p">:</span>
+            <span class="n">key_file</span> <span class="o">=</span> <span class="s">&#39;zg&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">key_file</span> <span class="o">=</span> <span class="n">keys_in_file</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Can not provide key &quot;&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c"># A variable for one time</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">key_file</span><span class="p">][</span><span class="n">instant</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;phi&#39;</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">arr</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span> <span class="nf">get_spectral3dvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spatial3dvar</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="o">.</span><span class="n">sh3d_from_spat3d</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_spatial2dvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;phi&#39;</span><span class="p">:</span>
+            <span class="n">key_file</span> <span class="o">=</span> <span class="s">&#39;zg&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">key_file</span> <span class="o">=</span> <span class="n">keys_in_file</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Can not provide key &quot;&#39;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s">&#39;&quot;&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">File</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c"># A variable for one time</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">key_file</span><span class="p">][</span><span class="n">instant</span><span class="p">,</span> <span class="n">ip</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s">&#39;phi&#39;</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">g</span> <span class="o">*</span> <span class="n">arr</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span> <span class="nf">get_spectral2dvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">,</span> <span class="n">ip</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_spatial2dvar</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">instant</span><span class="p">,</span> <span class="n">ip</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">oper</span><span class="o">.</span><span class="n">sh_from_spat</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+
+</div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">PUMADataSet</span><span class="p">()</span>
+
+    <span class="n">asp</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">oper</span><span class="o">.</span><span class="n">create_array_spat</span><span class="p">()</span>
+    <span class="n">ash</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">oper</span><span class="o">.</span><span class="n">create_array_sh</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../../../index.html">SpectrAtmo 0.0.0</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2015, Pierre Augier.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

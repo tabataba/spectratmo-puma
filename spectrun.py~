@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+from spectratmo.datasets.puma import PUMADataSet
+
+from argparse import ArgumentParser
+parser = ArgumentParser()
+
+if __name__ == "__main__":
+
+  parser.add_argument("-p","--path",action="store",type=str)
+  parser.add_argument("-o","--output",action="store",type=str)  
+
+  args, unknown = parser.parse_known_args()
+
+  path=args.path
+
+  ds = PUMADataSet(name='test',path_file='',puma_path_result_base='')
+  ds.spectra.compute_tmean()

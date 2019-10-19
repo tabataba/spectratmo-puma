@@ -1,0 +1,109 @@
+"""Output
+=========
+
+.. autosummary::
+   :toctree:
+
+   spatial
+   global_tmean
+   energy_budget
+   spectra
+   seb
+
+"""
+
+import os
+
+from h5netcdf import File
+# we should try not to use the legacy API...
+import h5netcdf.legacyapi as net
+
+from spectratmo.phys_const import khi
+
+from spectratmo.planets import earth
+
+class BaseOutput(object):
+    _name = 'base'
+
+    def __init__(self, dataset):
+        self._dataset = dataset
+
+    def compute_loopallinstants(self):
+        for instant in self._dataset.instants:
+            self.compute_1instant(instant)
+
+    def _get_path_from_name(self, name):
+        path = os.path.join(self._dataset.path, name + '.nc')
+        if not path.endswith('.nc'):
+            path += '.nc'
+        return path
+
+    def check_if_file_exists(self, name):
+        path = self._get_path_from_name(name)
+        if os.path.isfile(path):
+            return True
+        else:
+            return False
+
+    def get_spat1d(self, varname='save'):
+        fname = self._get_path_from_name(varname)
+        with File(fname) as fx:
+            arr = fx[varname][:]
+        return arr
+
+    def save_spat3d(self, var, varname='save'):
+        """Save
+
+        We have to improve this function:
+        save_spat3d(self, var, varname, filename=None)
+
+        Also, now it deletes any existing file !
+
+        """
+        ds = self._dataset
+        fname = self._get_path_from_name(varname)
+
+        # PA: I think it would be nicer to use the new API of
+        # h5netcdf (i.e. as in get_netcdf_spat1d).
+        # see https://pypi.python.org/pypi/h5netcdf/
+        # FTV: I agree, but the website said it was experimental 
+        # and "not yet finished" so I'm not so sure how much we 
+        # can trust it at this point. 
+        with net.Dataset(fname, 'w') as dsn:
+            dsn.createDimension('lev', ds.nlev)
+            dsn.createDimension('lat', self.nlat)
+            dsn.createDimension('lon', self.nlon)
+            levs = dsn.createVariable('lev', float, ('lev',))
+            levs[:] = ds.pressure_levels
+            lats = dsn.createVariable('lat', float, ('lat',))
+            lats[:] = ds.lats
+            lons = dsn.createVariable('lon', float, ('lon',))
+            lons[:] = ds.lons
+            v = dsn.createVariable(varname, float, ('lev', 'lat', 'lon',))
+            v[:] = var
+
+    def save_spat1d(self, var, varname='save'):
+        """Save
+
+        We have to improve this function:
+        save_spat1d(self, var, varname, filename=None)
+
+        Also, now it deletes any existing file !
+
+        """
+        ds = self._dataset
+        fname = self._get_path_from_name(varname)
+        print fname
+        # with new API?
+        with net.Dataset(fname, 'w') as dsn:
+            dsn.createDimension('lev', ds.nlev)
+            levs = dsn.createVariable('lev', float, ('lev',))
+            levs[:] = ds.pressure_levels
+            v = dsn.createVariable(varname, float, ('lev',))
+            v[:] = var
+
+    def compute_Lambda(self,ip):
+        ds = self._dataset
+        Lambda = (earth.pressure_m/ds.pressure_levels[ip])**khi
+        return Lambda
+
